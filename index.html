@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="TAS ZGIERZ">
+  <title>TAS ZGIERZ | Staff Scanner</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #0b0f16;
+      color: #f5f6fa;
+      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      padding: 28px 18px;
+    }
+    .app {
+      max-width: 460px;
+      margin: auto;
+    }
+    .brand {
+      text-align: center;
+      padding: 30px 0;
+    }
+    .brand h1 {
+      color: #ffd43b;
+      font-size: 30px;
+      margin: 0;
+    }
+    .brand p {
+      color: #a4adbc;
+      letter-spacing: 2px;
+      font-size: 12px;
+    }
+    .panel {
+      background: #171e29;
+      border: 1px solid #303a49;
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .tag {
+      display: inline-block;
+      background: #332b13;
+      color: #ffd43b;
+      border-radius: 20px;
+      padding: 8px 12px;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+    h2 { font-size: 21px; margin: 5px 0 10px; }
+    .hint {
+      color: #a4adbc;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    #reader {
+      overflow: hidden;
+      background: #090c11;
+      border: 2px solid #ffd43b;
+      border-radius: 16px;
+      margin: 22px 0;
+      min-height: 240px;
+    }
+    video {
+      width: 100% !important;
+      border-radius: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 7px 0;
+      cursor: pointer;
+    }
+    .start { background: #ffd43b; color: #111; }
+    .stop { background: #303a49; color: white; }
+    #status {
+      margin-top: 15px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #101620;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+    .footer {
+      text-align: center;
+      color: #7e899b;
+      font-size: 12px;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="brand">
+    <h1>📦 TAS ZGIERZ</h1>
+    <p>STAFF SCANNER</p>
+  </header>
+
+  <main class="panel">
+    <span class="tag">TEST KAMERY • iPHONE</span>
+    <h2>📷 Skaner QR</h2>
+    <p class="hint">
+      Uruchom kamerę i skieruj ją na kod QR.
+      Ten test nie zapisuje danych pracowników.
+    </p>
+
+    <div id="reader"></div>
+
+    <button class="start" id="startBtn" onclick="startScanner()">
+      📷 URUCHOM KAMERĘ
+    </button>
+    <button class="stop" id="stopBtn" onclick="stopScanner()">
+      ZATRZYMAJ KAMERĘ
+    </button>
+
+    <div id="status" role="status" aria-live="polite">
+      Gotowy do uruchomienia kamery.
+    </div>
+  </main>
+
+  <div class="footer">TAS ZGIERZ • VERSION 1.0</div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+  let scanner = null;
+  let running = false;
+
+  const statusBox = document.getElementById('status');
+
+  async function startScanner() {
+    if (running) return;
+
+    if (typeof Html5Qrcode === 'undefined') {
+      statusBox.textContent = '❌ Nie udało się załadować biblioteki QR.';
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      statusBox.textContent = '❌ Kamera nie jest dostępna w tej przeglądarce.';
+      return;
+    }
+
+    statusBox.textContent = '⏳ Uruchamianie kamery...';
+
+    try {
+      if (!scanner) scanner = new Html5Qrcode('reader');
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        function(decodedText) {
+          statusBox.textContent = '✅ Odczytano QR: ' + decodedText;
+        },
+        function() {}
+      );
+
+      running = true;
+      statusBox.textContent = '✅ Kamera działa. Możesz skanować QR.';
+    } catch (error) {
+      statusBox.textContent = '❌ ' + (error.message || String(error));
+    }
+  }
+
+  async function stopScanner() {
+    if (!scanner || !running) return;
+
+    try {
+      await scanner.stop();
+      running = false;
+      statusBox.textContent = 'Kamera zatrzymana.';
+    } catch (error) {
+      statusBox.textContent = '❌ ' + (error.message || String(error));
+    }
+  }
+</script>
+</body>
+</html>
